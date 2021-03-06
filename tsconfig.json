@@ -42,6 +42,7 @@
     "typeRoots": ["node_modules/@types", "src/types"],
     "plugins": [{
       "transform": "ts-transform-default-export",
+      "allowNamedExports": true
     }]
   },
   "include": ["src/**/*.ts"],
