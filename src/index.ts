@@ -25,7 +25,7 @@ const hasArrayBuffer =
  * @param actual any value
  * @param expected any other value
  */
-function deepEqual<T>(actual: unknown, expected: T): actual is T {
+function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
   // fastest comparison - strict equal
   if (actual === expected) {
     return true;
