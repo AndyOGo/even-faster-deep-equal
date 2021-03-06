@@ -224,7 +224,7 @@ function deepEqual<T>(actual: unknown, expected: T): actual is T {
         }
       }
 
-      // String representation of custom objects
+      // String representation of custom objects like Error, etc.
       if (actual.toString !== objectToString) {
         if (actual.toString() !== expected.toString()) {
           return false;
@@ -240,7 +240,13 @@ function deepEqual<T>(actual: unknown, expected: T): actual is T {
       const length = keys.length;
       let index = plate.index || length;
 
-      if (length !== Object.keys(expected).length) return false;
+      if (
+        !actual.$$typeof &&
+        !expected.$$typeof &&
+        length !== Object.keys(expected).length
+      ) {
+        return false;
+      }
 
       plate.keys = keys;
       plate.length = length;
