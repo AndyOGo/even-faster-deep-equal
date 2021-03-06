@@ -45,8 +45,6 @@ function deepEqual<T>(actual: unknown, expected: T): actual is T {
         stackPointer--;
 
         continue stack;
-      } else {
-        return true;
       }
     }
 
