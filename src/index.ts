@@ -115,7 +115,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
       let keys;
       let item;
       let iterator;
-      let skippedAllKeys;
+      let actualItem;
+      let expectedItem;
 
       switch (type) {
         // Array
@@ -137,15 +138,23 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           }
 
           for (; index-- !== 0; ) {
+            actualItem = actual[index];
+            expectedItem = (<[]>(<unknown>expected))[index];
+
+            if (actualItem === expectedItem) {
+              continue;
+            }
+
             plate.index = index;
 
             stack[++stackPointer] = {
-              actual: actual[index],
-              expected: (<[]>(<unknown>expected))[index],
+              actual: actualItem,
+              expected: expectedItem,
             };
 
             continue stack;
           }
+
           break;
 
         // Map
@@ -171,13 +180,21 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           iterator = plate.iterator || actual.entries();
           plate.iterator = iterator;
           while (!(item = iterator.next()).done) {
+            actualItem = item.value[1];
+            expectedItem = expected.get(item.value[0]);
+
+            if (actualItem === expectedItem) {
+              continue;
+            }
+
             stack[++stackPointer] = {
-              actual: item.value[1],
-              expected: expected.get(item.value[0]),
+              actual: actualItem,
+              expected: expectedItem,
             };
 
             continue stack;
           }
+
           break;
 
         // Set
@@ -203,9 +220,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             }
           }
 
-          stack[stackPointer] = null;
-          stackPointer--;
-          continue stack;
           break;
 
         // ArrayBuffer
@@ -225,15 +239,23 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           index = plate.index || length;
 
           for (; index-- !== 0; ) {
+            actualItem = (<[]>(<unknown>actual))[index];
+            expectedItem = (<[]>(<unknown>expected))[index];
+
+            if (actualItem === expectedItem) {
+              continue;
+            }
+
             plate.index = index;
 
             stack[++stackPointer] = {
-              actual: (<[]>(<unknown>actual))[index],
-              expected: (<[]>(<unknown>expected))[index],
+              actual: actualItem,
+              expected: expectedItem,
             };
 
             continue stack;
           }
+
           break;
 
         // Regular Expression
@@ -303,8 +325,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             return false;
           }
 
-          skippedAllKeys = true;
-
           for (; index-- !== 0; ) {
             const key = keys[index];
 
@@ -322,30 +342,35 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
 
               continue;
             }
-            skippedAllKeys = false;
 
             if (!objectHasOwnProperty.call(expected, key)) {
               return false;
             }
 
+            actualItem = (<Record<string, unknown>>(<unknown>actual))[key];
+            expectedItem = (<Record<string, unknown>>(<unknown>expected))[key];
+
+            if (actualItem === expectedItem) {
+              continue;
+            }
+
             plate.index = index;
 
             stack[++stackPointer] = {
-              actual: (<Record<string, unknown>>(<unknown>actual))[key],
-              expected: (<Record<string, unknown>>(<unknown>expected))[key],
+              actual: actualItem,
+              expected: expectedItem,
             };
 
             continue stack;
           }
 
-          if (skippedAllKeys) {
-            plate.length = 0;
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
-          }
+          plate.length = 0;
           break;
       }
+
+      stack[stackPointer] = null;
+      stackPointer--;
+      continue stack;
     }
 
     // Primitive
