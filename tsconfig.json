@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "incremental": true,
     "target": "ES3",
     "outDir": "build/main",
@@ -45,7 +46,7 @@
       "allowNamedExports": true
     }]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.js"],
   "exclude": ["node_modules/**"],
   "compileOnSave": false
 }

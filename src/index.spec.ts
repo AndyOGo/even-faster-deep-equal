@@ -1,333 +1,337 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import test from 'ava';
 import 'jsdom-global/register';
 
 import deepEqual from './index';
 
-const primitives = [
-  undefined,
-  null,
-  true,
-  false,
-  0,
-  1,
-  '',
-  'foo',
-  {},
-  [],
-  /foo/g,
-  Date.now(),
-  new Date(),
-  Symbol(),
-  function () {},
-  function foo() {},
-  () => {},
-];
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const runTests = require('./run-tests.js');
 
-test('it compares literal primitives', (t) => {
-  primitives.forEach((primitive) => {
-    t.true(deepEqual(primitive, primitive));
-  });
+runTests(test, deepEqual);
 
-  primitives.forEach((a) => {
-    primitives.forEach((b) => {
-      if (a !== b) {
-        t.false(deepEqual(a, b));
-      }
-    });
-  });
-});
+// const primitives = [
+//   undefined,
+//   null,
+//   true,
+//   false,
+//   0,
+//   1,
+//   '',
+//   'foo',
+//   {},
+//   [],
+//   /foo/g,
+//   Date.now(),
+//   new Date(),
+//   Symbol(),
+//   function () {},
+//   function foo() {},
+//   () => {},
+// ];
 
-test('it compares empty arrays', (t) => {
-  t.true(deepEqual([], []));
-});
+// test('it compares literal primitives', (t) => {
+//   primitives.forEach((primitive) => {
+//     t.true(deepEqual(primitive, primitive));
+//   });
 
-test('it compares different length arrays', (t) => {
-  t.false(deepEqual([], [1]));
-  t.false(deepEqual([1], []));
-  t.false(deepEqual([1], [1, 2]));
-  t.false(deepEqual([1, 2], [1]));
-});
+//   primitives.forEach((a) => {
+//     primitives.forEach((b) => {
+//       if (a !== b) {
+//         t.false(deepEqual(a, b));
+//       }
+//     });
+//   });
+// });
 
-test('it compares array of literal primitives', (t) => {
-  t.true(deepEqual(primitives, [...primitives]));
-});
+// test('it compares empty arrays', (t) => {
+//   t.true(deepEqual([], []));
+// });
 
-test('it compares nested arrays of literal primitives', (t) => {
-  const mapNested = (_primitive: unknown, index: number) => [
-    ...primitives.slice(0, index + 1),
-  ];
+// test('it compares different length arrays', (t) => {
+//   t.false(deepEqual([], [1]));
+//   t.false(deepEqual([1], []));
+//   t.false(deepEqual([1], [1, 2]));
+//   t.false(deepEqual([1, 2], [1]));
+// });
 
-  t.true(deepEqual(primitives.map(mapNested), primitives.map(mapNested)));
-});
+// test('it compares array of literal primitives', (t) => {
+//   t.true(deepEqual(primitives, [...primitives]));
+// });
 
-test('it compares empty objects', (t) => {
-  t.true(deepEqual({}, {}));
-});
+// test('it compares nested arrays of literal primitives', (t) => {
+//   const mapNested = (_primitive: unknown, index: number) => [
+//     ...primitives.slice(0, index + 1),
+//   ];
 
-test('it compares different keys objects', (t) => {
-  t.false(deepEqual({}, { foo: 'bar' }));
-  t.false(deepEqual({ foo: 'bar' }, {}));
-  t.false(deepEqual({ foo: 'bar' }, { bar: 'baz' }));
-  t.false(deepEqual({ bar: 'baz' }, { foo: 'bar' }));
-});
+//   t.true(deepEqual(primitives.map(mapNested), primitives.map(mapNested)));
+// });
 
-test('it compares object of literal primitives', (t) => {
-  const obj = primitives.reduce(
-    (obj, primitive, index) => ({
-      ...obj,
-      [`foo-${index}`]: primitive,
-    }),
-    {}
-  );
+// test('it compares empty objects', (t) => {
+//   t.true(deepEqual({}, {}));
+// });
 
-  t.true(deepEqual(obj, { ...obj }));
-});
+// test('it compares different keys objects', (t) => {
+//   t.false(deepEqual({}, { foo: 'bar' }));
+//   t.false(deepEqual({ foo: 'bar' }, {}));
+//   t.false(deepEqual({ foo: 'bar' }, { bar: 'baz' }));
+//   t.false(deepEqual({ bar: 'baz' }, { foo: 'bar' }));
+// });
 
-test('it compares regular expressions', (t) => {
-  const patterns = ['foo', 'bar'];
-  const flags = ['g', 'i', 'm', 's', 'u', 'y'];
+// test('it compares object of literal primitives', (t) => {
+//   const obj = primitives.reduce(
+//     (obj, primitive, index) => ({
+//       ...obj,
+//       [`foo-${index}`]: primitive,
+//     }),
+//     {}
+//   );
 
-  patterns.forEach((pattern) => {
-    t.true(deepEqual(new RegExp(pattern), new RegExp(pattern)));
+//   t.true(deepEqual(obj, { ...obj }));
+// });
 
-    flags.forEach((flag) => {
-      t.true(deepEqual(new RegExp(pattern, flag), new RegExp(pattern, flag)));
-    });
-  });
+// test('it compares regular expressions', (t) => {
+//   const patterns = ['foo', 'bar'];
+//   const flags = ['g', 'i', 'm', 's', 'u', 'y'];
 
-  patterns.forEach((pattern, patternIndex) => {
-    t.false(
-      deepEqual(
-        new RegExp(pattern),
-        new RegExp(patterns[(patternIndex + 1) % patterns.length])
-      )
-    );
+//   patterns.forEach((pattern) => {
+//     t.true(deepEqual(new RegExp(pattern), new RegExp(pattern)));
 
-    flags.forEach((flag, flagIndex) => {
-      t.false(
-        deepEqual(
-          new RegExp(pattern, flag),
-          new RegExp(
-            patterns[(patternIndex + 1) % patterns.length],
-            flags[(flagIndex + 1) % flags.length]
-          )
-        )
-      );
-    });
-  });
-});
+//     flags.forEach((flag) => {
+//       t.true(deepEqual(new RegExp(pattern, flag), new RegExp(pattern, flag)));
+//     });
+//   });
 
-test('it compares dates', (t) => {
-  const date = new Date();
-  const dateClone = new Date(date.getTime());
-  const dateDiff = new Date(date.getTime() + 1);
+//   patterns.forEach((pattern, patternIndex) => {
+//     t.false(
+//       deepEqual(
+//         new RegExp(pattern),
+//         new RegExp(patterns[(patternIndex + 1) % patterns.length])
+//       )
+//     );
 
-  t.true(deepEqual(date, dateClone));
-  t.true(deepEqual([date], [dateClone]));
-  t.true(deepEqual({ date: date }, { date: dateClone }));
-  t.true(deepEqual({ date: [date] }, { date: [dateClone] }));
-  t.true(deepEqual([{ date: date }], [{ date: dateClone }]));
-  t.true(deepEqual([{ date: [date] }], [{ date: [dateClone] }]));
+//     flags.forEach((flag, flagIndex) => {
+//       t.false(
+//         deepEqual(
+//           new RegExp(pattern, flag),
+//           new RegExp(
+//             patterns[(patternIndex + 1) % patterns.length],
+//             flags[(flagIndex + 1) % flags.length]
+//           )
+//         )
+//       );
+//     });
+//   });
+// });
 
-  t.false(deepEqual(date, dateDiff));
-  t.false(deepEqual([date], [dateDiff]));
-  t.false(deepEqual({ date: date }, { date: dateDiff }));
-  t.false(deepEqual({ date: [date] }, { date: [dateDiff] }));
-  t.false(deepEqual([{ date: date }], [{ date: dateDiff }]));
-  t.false(deepEqual([{ date: [date] }], [{ date: [dateDiff] }]));
-});
+// test('it compares dates', (t) => {
+//   const date = new Date();
+//   const dateClone = new Date(date.getTime());
+//   const dateDiff = new Date(date.getTime() + 1);
 
-test('it compares symbols', (t) => {
-  const foo = Symbol('foo');
-  const fooCopy = Symbol('foo');
-  const bar = Symbol('bar');
+//   t.true(deepEqual(date, dateClone));
+//   t.true(deepEqual([date], [dateClone]));
+//   t.true(deepEqual({ date: date }, { date: dateClone }));
+//   t.true(deepEqual({ date: [date] }, { date: [dateClone] }));
+//   t.true(deepEqual([{ date: date }], [{ date: dateClone }]));
+//   t.true(deepEqual([{ date: [date] }], [{ date: [dateClone] }]));
 
-  t.true(deepEqual(foo, foo));
-  t.false(deepEqual(foo, fooCopy));
-  t.false(deepEqual(foo, bar));
-});
+//   t.false(deepEqual(date, dateDiff));
+//   t.false(deepEqual([date], [dateDiff]));
+//   t.false(deepEqual({ date: date }, { date: dateDiff }));
+//   t.false(deepEqual({ date: [date] }, { date: [dateDiff] }));
+//   t.false(deepEqual([{ date: date }], [{ date: dateDiff }]));
+//   t.false(deepEqual([{ date: [date] }], [{ date: [dateDiff] }]));
+// });
 
-test('it compares maps', (t) => {
-  const map = new Map([
-    ['key', 'value'],
-    ['foo', 'bar'],
-  ]);
-  const mapCopy = new Map([
-    ['foo', 'bar'],
-    ['key', 'value'],
-  ]);
-  const mapDiff = new Map([
-    ['foo', 'baz'],
-    ['key', 'value'],
-  ]);
+// test('it compares symbols', (t) => {
+//   const foo = Symbol('foo');
+//   const fooCopy = Symbol('foo');
+//   const bar = Symbol('bar');
 
-  t.true(deepEqual(map, map));
-  t.true(deepEqual(map, mapCopy));
+//   t.true(deepEqual(foo, foo));
+//   t.false(deepEqual(foo, fooCopy));
+//   t.false(deepEqual(foo, bar));
+// });
 
-  t.false(deepEqual(map, mapDiff));
-  t.false(deepEqual(map, new Map()));
-});
+// test('it compares maps', (t) => {
+//   const map = new Map([
+//     ['key', 'value'],
+//     ['foo', 'bar'],
+//   ]);
+//   const mapCopy = new Map([
+//     ['foo', 'bar'],
+//     ['key', 'value'],
+//   ]);
+//   const mapDiff = new Map([
+//     ['foo', 'baz'],
+//     ['key', 'value'],
+//   ]);
 
-test('it compares empty maps', (t) => {
-  t.true(deepEqual(new Map(), new Map()));
-});
+//   t.true(deepEqual(map, map));
+//   t.true(deepEqual(map, mapCopy));
 
-test('it compares different length maps', (t) => {
-  t.false(deepEqual(new Map(), new Map([['key', 'value']])));
-  t.false(deepEqual(new Map([['key', 'value']]), new Map()));
-  t.false(
-    deepEqual(
-      new Map([['key', 'value']]),
-      new Map([
-        ['key', 'value'],
-        ['foo', 'bar'],
-      ])
-    )
-  );
-  t.false(
-    deepEqual(
-      new Map([
-        ['key', 'value'],
-        ['foo', 'bar'],
-      ]),
-      new Map([['key', 'value']])
-    )
-  );
-});
+//   t.false(deepEqual(map, mapDiff));
+//   t.false(deepEqual(map, new Map()));
+// });
 
-test('it compares sets', (t) => {
-  const set = new Set([1, 2, 3, 4]);
-  const setCopy = new Set([4, 3, 2, 1]);
-  const setDiff = new Set([1, 2, 5, 3]);
+// test('it compares empty maps', (t) => {
+//   t.true(deepEqual(new Map(), new Map()));
+// });
 
-  t.true(deepEqual(set, set));
-  t.true(deepEqual(set, setCopy));
+// test('it compares different length maps', (t) => {
+//   t.false(deepEqual(new Map(), new Map([['key', 'value']])));
+//   t.false(deepEqual(new Map([['key', 'value']]), new Map()));
+//   t.false(
+//     deepEqual(
+//       new Map([['key', 'value']]),
+//       new Map([
+//         ['key', 'value'],
+//         ['foo', 'bar'],
+//       ])
+//     )
+//   );
+//   t.false(
+//     deepEqual(
+//       new Map([
+//         ['key', 'value'],
+//         ['foo', 'bar'],
+//       ]),
+//       new Map([['key', 'value']])
+//     )
+//   );
+// });
 
-  t.false(deepEqual(set, new Map()));
-  t.false(deepEqual(set, setDiff));
-});
+// test('it compares sets', (t) => {
+//   const set = new Set([1, 2, 3, 4]);
+//   const setCopy = new Set([4, 3, 2, 1]);
+//   const setDiff = new Set([1, 2, 5, 3]);
 
-test('it compares empty sets', (t) => {
-  t.true(deepEqual(new Set(), new Set()));
-});
+//   t.true(deepEqual(set, set));
+//   t.true(deepEqual(set, setCopy));
 
-test('it compares different length sets', (t) => {
-  t.false(deepEqual(new Set(), new Set([1])));
-  t.false(deepEqual(new Set([1]), new Set()));
-  t.false(deepEqual(new Set([1]), new Set([1, 2])));
-  t.false(deepEqual(new Set([1, 2]), new Set([1])));
-});
+//   t.false(deepEqual(set, new Map()));
+//   t.false(deepEqual(set, setDiff));
+// });
 
-test('compares array buffers', (t) => {
-  const arrayBufferViews = [
-    Int8Array,
-    Uint8Array,
-    Uint8ClampedArray,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-  ];
+// test('it compares empty sets', (t) => {
+//   t.true(deepEqual(new Set(), new Set()));
+// });
 
-  arrayBufferViews.forEach((ArrayBufferView) => {
-    const arr = new ArrayBufferView([21, 31]);
-    const arrCopy = new ArrayBufferView([21, 31]);
-    const arrDiff = new ArrayBufferView([31, 21]);
+// test('it compares different length sets', (t) => {
+//   t.false(deepEqual(new Set(), new Set([1])));
+//   t.false(deepEqual(new Set([1]), new Set()));
+//   t.false(deepEqual(new Set([1]), new Set([1, 2])));
+//   t.false(deepEqual(new Set([1, 2]), new Set([1])));
+// });
 
-    t.true(deepEqual(arr, arr));
-    t.true(deepEqual(arr, arrCopy));
+// test('compares array buffers', (t) => {
+//   const arrayBufferViews = [
+//     Int8Array,
+//     Uint8Array,
+//     Uint8ClampedArray,
+//     Int16Array,
+//     Uint16Array,
+//     Int32Array,
+//     Uint32Array,
+//     Float32Array,
+//     Float64Array,
+//   ];
 
-    t.false(deepEqual(arr, new ArrayBufferView(0)));
-    t.false(deepEqual(arr, arrDiff));
-  });
-});
+//   arrayBufferViews.forEach((ArrayBufferView) => {
+//     const arr = new ArrayBufferView([21, 31]);
+//     const arrCopy = new ArrayBufferView([21, 31]);
+//     const arrDiff = new ArrayBufferView([31, 21]);
 
-test('compares empty array buffers', (t) => {
-  t.true(deepEqual(new Int8Array(), new Int8Array()));
-  t.true(deepEqual(new Uint8Array(), new Uint8Array()));
-  t.true(deepEqual(new Uint8ClampedArray(), new Uint8ClampedArray()));
-  t.true(deepEqual(new Int16Array(), new Int16Array()));
-  t.true(deepEqual(new Uint16Array(), new Uint16Array()));
-  t.true(deepEqual(new Int32Array(), new Int32Array()));
-  t.true(deepEqual(new Uint32Array(), new Uint32Array()));
-  t.true(deepEqual(new Float32Array(), new Float32Array()));
-  t.true(deepEqual(new Float64Array(), new Float64Array()));
-});
+//     t.true(deepEqual(arr, arr));
+//     t.true(deepEqual(arr, arrCopy));
 
-test('compares error objects', (t) => {
-  const err = new Error();
-  const errCopy = new Error();
-  const errMsg = new Error('foo');
-  const errMsgCopy = new Error('foo');
-  const errDiff = new Error('bar');
+//     t.false(deepEqual(arr, new ArrayBufferView(0)));
+//     t.false(deepEqual(arr, arrDiff));
+//   });
+// });
 
-  t.true(deepEqual(err, err));
-  t.true(deepEqual(err, errCopy));
-  t.true(deepEqual(errMsg, errMsg));
-  t.true(deepEqual(errMsg, errMsgCopy));
+// test('compares empty array buffers', (t) => {
+//   t.true(deepEqual(new Int8Array(), new Int8Array()));
+//   t.true(deepEqual(new Uint8Array(), new Uint8Array()));
+//   t.true(deepEqual(new Uint8ClampedArray(), new Uint8ClampedArray()));
+//   t.true(deepEqual(new Int16Array(), new Int16Array()));
+//   t.true(deepEqual(new Uint16Array(), new Uint16Array()));
+//   t.true(deepEqual(new Int32Array(), new Int32Array()));
+//   t.true(deepEqual(new Uint32Array(), new Uint32Array()));
+//   t.true(deepEqual(new Float32Array(), new Float32Array()));
+//   t.true(deepEqual(new Float64Array(), new Float64Array()));
+// });
 
-  t.false(deepEqual(err, errMsg));
-  t.false(deepEqual(errMsg, errDiff));
-});
+// test('compares error objects', (t) => {
+//   const err = new Error();
+//   const errCopy = new Error();
+//   const errMsg = new Error('foo');
+//   const errMsgCopy = new Error('foo');
+//   const errDiff = new Error('bar');
 
-test('compares HTML elements', (t) => {
-  const div = document.createElement('div');
+//   t.true(deepEqual(err, err));
+//   t.true(deepEqual(err, errCopy));
+//   t.true(deepEqual(errMsg, errMsg));
+//   t.true(deepEqual(errMsg, errMsgCopy));
 
-  t.true(deepEqual(div, div));
-  // t.false(deepEqual(div, div.cloneNode()));
-  // t.false(deepEqual(div, div.cloneNode(true)));
-});
+//   t.false(deepEqual(err, errMsg));
+//   t.false(deepEqual(errMsg, errDiff));
+// });
 
-test('compares named functions', (t) => {
-  t.false(
-    deepEqual(
-      function foo() {},
-      function foo() {}
-    )
-  );
+// test('compares HTML elements', (t) => {
+//   const div = document.createElement('div');
 
-  t.false(
-    deepEqual(
-      function foo() {},
-      function bar() {}
-    )
-  );
-});
+//   t.true(deepEqual(div, div));
+//   // t.false(deepEqual(div, div.cloneNode()));
+//   // t.false(deepEqual(div, div.cloneNode(true)));
+// });
 
-test('compares anonymous functions', (t) => {
-  t.false(
-    deepEqual(
-      function () {},
-      function () {}
-    )
-  );
-});
+// test('compares named functions', (t) => {
+//   t.false(
+//     deepEqual(
+//       function foo() {},
+//       function foo() {}
+//     )
+//   );
 
-test('compares arrow functions', (t) => {
-  t.false(
-    deepEqual(
-      () => {},
-      () => {}
-    )
-  );
-});
+//   t.false(
+//     deepEqual(
+//       function foo() {},
+//       function bar() {}
+//     )
+//   );
+// });
 
-test('bypasses react/preact internals', (t) => {
-  const $$typeof = 'foo';
-  const reactOwner = { _owner: {}, $$typeof };
-  const preactVNode = { __v: {}, $$typeof };
-  const preactOwner = { __o: {}, $$typeof };
-  const fooNode = { $$typeof };
-  const barNode = { $$typeof: 'bar' };
+// test('compares anonymous functions', (t) => {
+//   t.false(
+//     deepEqual(
+//       function () {},
+//       function () {}
+//     )
+//   );
+// });
 
-  t.true(deepEqual(reactOwner, fooNode));
-  t.true(deepEqual(preactVNode, fooNode));
-  t.true(deepEqual(preactOwner, fooNode));
+// test('compares arrow functions', (t) => {
+//   t.false(
+//     deepEqual(
+//       () => {},
+//       () => {}
+//     )
+//   );
+// });
 
-  t.false(deepEqual(reactOwner, barNode));
-  t.false(deepEqual(preactVNode, barNode));
-  t.false(deepEqual(preactOwner, barNode));
-});
+// test('bypasses react/preact internals', (t) => {
+//   const $$typeof = 'foo';
+//   const reactOwner = { _owner: {}, $$typeof };
+//   const preactVNode = { __v: {}, $$typeof };
+//   const preactOwner = { __o: {}, $$typeof };
+//   const fooNode = { $$typeof };
+//   const barNode = { $$typeof: 'bar' };
+
+//   t.true(deepEqual(reactOwner, fooNode));
+//   t.true(deepEqual(preactVNode, fooNode));
+//   t.true(deepEqual(preactOwner, fooNode));
+
+//   t.false(deepEqual(reactOwner, barNode));
+//   t.false(deepEqual(preactVNode, barNode));
+//   t.false(deepEqual(preactOwner, barNode));
+// });
