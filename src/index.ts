@@ -24,11 +24,14 @@ export type Stack = (Plate | null)[];
 const objectHasOwnProperty = Object.prototype.hasOwnProperty;
 const objectToString = Object.prototype.toString;
 const objectValueOf = Object.prototype.valueOf;
+const objectKeys = Object.keys;
+const arrayIsArray = Array.isArray;
 const hasElementType = typeof Element !== 'undefined';
 const hasMap = typeof Map === 'function';
 const hasSet = typeof Set === 'function';
 const hasArrayBuffer =
   typeof ArrayBuffer === 'function' && !!ArrayBuffer.isView;
+const arrayBufferIsView = hasArrayBuffer && ArrayBuffer.isView;
 
 /**
  * Tests deep strict equality between the `actual` and `expected` parameters.
@@ -80,15 +83,15 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
       }
 
       const type =
-        plate.type || Array.isArray(actual)
+        plate.type || arrayIsArray(actual)
           ? 'Array'
           : hasMap && actual instanceof Map && expected instanceof Map
           ? 'Map'
           : hasSet && actual instanceof Set && expected instanceof Set
           ? 'Set'
           : hasArrayBuffer &&
-            ArrayBuffer.isView(actual) &&
-            ArrayBuffer.isView(expected)
+            (<ArrayBufferConstructor['isView']>arrayBufferIsView)(actual) &&
+            (<ArrayBufferConstructor['isView']>arrayBufferIsView)(expected)
           ? 'ArrayBuffer'
           : actual.constructor === RegExp
           ? 'RegExp'
@@ -283,14 +286,14 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
 
         // Object
         default:
-          keys = plate.keys || Object.keys(actual);
+          keys = plate.keys || objectKeys(actual);
           length = keys.length;
 
           if (
             !plate.keys &&
             !actual.$$typeof &&
             !expected.$$typeof &&
-            length !== Object.keys(expected).length
+            length !== objectKeys(expected).length
           ) {
             return false;
           }
