@@ -1,6 +1,7 @@
 const hasMap = typeof Map === 'function';
 const hasSet = typeof Set === 'function';
 const hasSymbol = typeof Symbol === 'function';
+const hasBigInt = typeof BigInt !== 'undefined';
 const hasArrayBuffer =
   typeof ArrayBuffer === 'function' && !!ArrayBuffer.isView;
 
@@ -152,6 +153,19 @@ function runTests(test, deepEqual) {
 
       t.true(deepEqual(foo, foo));
       t.false(deepEqual(foo, fooCopy));
+      t.false(deepEqual(foo, bar));
+    });
+  }
+
+  if (hasBigInt) {
+    test('it compares big int', (t) => {
+      /* eslint-disable no-undef */
+      const foo = BigInt(1);
+      const fooCopy = BigInt(1);
+      const bar = BigInt(2);
+
+      t.true(deepEqual(foo, foo));
+      t.true(deepEqual(foo, fooCopy));
       t.false(deepEqual(foo, bar));
     });
   }
