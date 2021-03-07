@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export enum Type {
-  Array,
-  Map,
-  Set,
-  ArrayBuffer,
-  RegExp,
-  ValueOf,
-  ToString,
-  Object,
-}
+export type Type =
+  | 'Array'
+  | 'Map'
+  | 'Set'
+  | 'ArrayBuffer'
+  | 'RegExp'
+  | 'ValueOf'
+  | 'ToString'
+  | 'Object';
 export interface Plate {
   actual: any;
   expected: any;
@@ -89,22 +88,22 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
 
       const type =
         plate.type || Array.isArray(actual)
-          ? Type.Array
+          ? 'Array'
           : hasMap && actual instanceof Map && expected instanceof Map
-          ? Type.Map
+          ? 'Map'
           : hasSet && actual instanceof Set && expected instanceof Set
-          ? Type.Set
+          ? 'Set'
           : hasArrayBuffer &&
             ArrayBuffer.isView(actual) &&
             ArrayBuffer.isView(expected)
-          ? Type.ArrayBuffer
+          ? 'ArrayBuffer'
           : actual.constructor === RegExp
-          ? Type.RegExp
+          ? 'RegExp'
           : actual.valueOf !== objectValueOf
-          ? Type.ValueOf
+          ? 'ValueOf'
           : actual.toString !== objectToString
-          ? Type.ToString
-          : Type.Object;
+          ? 'ToString'
+          : 'Object';
       plate.type = type;
 
       let length;
@@ -117,7 +116,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
 
       switch (type) {
         // Array
-        case Type.Array:
+        case 'Array':
           length = actual.length;
 
           if (length !== (<[]>(<unknown>expected)).length) {
@@ -155,7 +154,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           break;
 
         // Map
-        case Type.Map:
+        case 'Map':
           if (!plate.iterator) {
             if (actual.size !== expected.size) {
               return false;
@@ -194,7 +193,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           break;
 
         // Set
-        case Type.Set:
+        case 'Set':
           if (!plate.iterator) {
             if (actual.size !== expected.size) {
               return false;
@@ -219,7 +218,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           break;
 
         // ArrayBuffer
-        case Type.ArrayBuffer:
+        case 'ArrayBuffer':
           length = (<ArrayBufferViewWithLength>actual).length;
           if (length != (<ArrayBufferViewWithLength>expected).length) {
             return false;
@@ -255,7 +254,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           break;
 
         // Regular Expression
-        case Type.RegExp:
+        case 'RegExp':
           if (
             (<RegExp>(<unknown>actual)).source !==
               (<RegExp>(<unknown>expected)).source ||
@@ -267,14 +266,14 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
           break;
 
         // Primitive value of custom objects like Date, String, Number, Symbol, Boolean, etc.
-        case Type.ValueOf:
+        case 'ValueOf':
           if (actual.valueOf() !== expected.valueOf()) {
             return false;
           }
           break;
 
         // String representation of custom objects like Error, etc.
-        case Type.ToString:
+        case 'ToString':
           if (actual.toString() !== expected.toString()) {
             return false;
           }
@@ -284,7 +283,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
         default:
           keys = plate.keys || Object.keys(actual);
           length = keys.length;
-          index = plate.index || length;
 
           if (
             !plate.keys &&
@@ -295,14 +293,15 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             return false;
           }
 
-          plate.keys = keys;
-          plate.length = length;
-
           if (length === 0) {
             stack[stackPointer] = null;
             stackPointer--;
             continue stack;
           }
+
+          index = plate.index || length;
+          plate.keys = keys;
+          plate.length = length;
 
           // custom handling for DOM elements
           if (hasElementType && actual instanceof Element) {
