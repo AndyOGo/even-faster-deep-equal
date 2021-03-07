@@ -137,7 +137,10 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             actualItem = actual[index];
             expectedItem = (<[]>(<unknown>expected))[index];
 
-            if (actualItem === expectedItem) {
+            if (
+              actualItem === expectedItem ||
+              (actualItem !== actualItem && expectedItem !== expectedItem)
+            ) {
               continue;
             }
 
@@ -178,7 +181,10 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             actualItem = item.value[1];
             expectedItem = expected.get(item.value[0]);
 
-            if (actualItem === expectedItem) {
+            if (
+              actualItem === expectedItem ||
+              (actualItem !== actualItem && expectedItem !== expectedItem)
+            ) {
               continue;
             }
 
@@ -237,7 +243,10 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             actualItem = (<[]>(<unknown>actual))[index];
             expectedItem = (<[]>(<unknown>expected))[index];
 
-            if (actualItem === expectedItem) {
+            if (
+              actualItem === expectedItem ||
+              (actualItem !== actualItem && expectedItem !== expectedItem)
+            ) {
               continue;
             }
 
@@ -333,7 +342,10 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             actualItem = (<Record<string, unknown>>(<unknown>actual))[key];
             expectedItem = (<Record<string, unknown>>(<unknown>expected))[key];
 
-            if (actualItem === expectedItem) {
+            if (
+              actualItem === expectedItem ||
+              (actualItem !== actualItem && expectedItem !== expectedItem)
+            ) {
               continue;
             }
 
@@ -358,7 +370,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
 
     // Primitive
     if (actual !== expected) {
-      return false;
+      // true if both NaN, false otherwise
+      return actual !== actual && expected !== expected;
     }
   } while ((plate = stack[stackPointer]));
 
