@@ -43,21 +43,18 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
     return true;
   }
 
-  const stack: Stack = [{ actual, expected }];
+  let plate: Plate | null = { actual, expected };
+  const stack: Stack = [plate];
   let stackPointer = 0;
-  let plate;
 
-  stack: while ((plate = stack[stackPointer])) {
-    const { actual, expected } = plate;
+  stack: do {
+    let { actual, expected } = plate;
 
     // fastest comparison - strict equal
-    if (actual === expected) {
-      if (stackPointer) {
-        stack[stackPointer] = null;
-        --stackPointer;
-
-        continue;
-      }
+    if (actual === expected && stackPointer) {
+      stack[stackPointer] = null;
+      plate = stack[--stackPointer] as Plate;
+      ({ actual, expected } = plate);
     }
 
     // if last index reached, pop stack or return
@@ -169,17 +166,16 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
               stackPointer--;
               continue stack;
             }
-
-            iterator = actual.entries();
-
-            while (!(item = iterator.next()).done) {
-              if (!expected.has(item.value[0])) return false;
-            }
           }
 
           iterator = plate.iterator || actual.entries();
           plate.iterator = iterator;
+
           while (!(item = iterator.next()).done) {
+            if (!expected.has(item.value[0])) {
+              return false;
+            }
+
             actualItem = item.value[1];
             expectedItem = expected.get(item.value[0]);
 
@@ -267,10 +263,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
               (<RegExp>(<unknown>expected)).flags
           ) {
             return false;
-          } else {
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
           }
           break;
 
@@ -278,10 +270,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
         case Type.ValueOf:
           if (actual.valueOf() !== expected.valueOf()) {
             return false;
-          } else {
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
           }
           break;
 
@@ -289,10 +277,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
         case Type.ToString:
           if (actual.toString() !== expected.toString()) {
             return false;
-          } else {
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
           }
           break;
 
@@ -377,7 +361,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
     if (actual !== expected) {
       return false;
     }
-  }
+  } while ((plate = stack[stackPointer]));
 
   return true;
 }
