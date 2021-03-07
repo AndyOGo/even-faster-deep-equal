@@ -1,3 +1,9 @@
+const hasMap = typeof Map === 'function';
+const hasSet = typeof Set === 'function';
+const hasSymbol = typeof Symbol === 'function';
+const hasArrayBuffer =
+  typeof ArrayBuffer === 'function' && !!ArrayBuffer.isView;
+
 function runTests(test, deepEqual) {
   const primitives = [
     undefined,
@@ -13,7 +19,6 @@ function runTests(test, deepEqual) {
     /foo/g,
     Date.now(),
     new Date(),
-    Symbol(),
     function () {},
     function foo() {},
     () => {},
@@ -84,34 +89,39 @@ function runTests(test, deepEqual) {
     const patterns = ['foo', 'bar'];
     const flags = ['g', 'i', 'm', 's', 'u', 'y'];
 
-    patterns.forEach((pattern) => {
-      t.true(deepEqual(new RegExp(pattern), new RegExp(pattern)));
+    try {
+      patterns.forEach((pattern) => {
+        t.true(deepEqual(new RegExp(pattern), new RegExp(pattern)));
 
-      flags.forEach((flag) => {
-        t.true(deepEqual(new RegExp(pattern, flag), new RegExp(pattern, flag)));
+        flags.forEach((flag) => {
+          t.true(
+            deepEqual(new RegExp(pattern, flag), new RegExp(pattern, flag))
+          );
+        });
       });
-    });
 
-    patterns.forEach((pattern, patternIndex) => {
-      t.false(
-        deepEqual(
-          new RegExp(pattern),
-          new RegExp(patterns[(patternIndex + 1) % patterns.length])
-        )
-      );
-
-      flags.forEach((flag, flagIndex) => {
+      patterns.forEach((pattern, patternIndex) => {
         t.false(
           deepEqual(
-            new RegExp(pattern, flag),
-            new RegExp(
-              patterns[(patternIndex + 1) % patterns.length],
-              flags[(flagIndex + 1) % flags.length]
-            )
+            new RegExp(pattern),
+            new RegExp(patterns[(patternIndex + 1) % patterns.length])
           )
         );
+
+        flags.forEach((flag, flagIndex) => {
+          t.false(
+            deepEqual(
+              new RegExp(pattern, flag),
+              new RegExp(
+                patterns[(patternIndex + 1) % patterns.length],
+                flags[(flagIndex + 1) % flags.length]
+              )
+            )
+          );
+        });
       });
-    });
+      // eslint-disable-next-line no-empty
+    } catch (error) {}
   });
 
   test('it compares dates', (t) => {
@@ -134,129 +144,137 @@ function runTests(test, deepEqual) {
     t.false(deepEqual([{ date: [date] }], [{ date: [dateDiff] }]));
   });
 
-  test('it compares symbols', (t) => {
-    const foo = Symbol('foo');
-    const fooCopy = Symbol('foo');
-    const bar = Symbol('bar');
+  if (hasSymbol) {
+    test('it compares symbols', (t) => {
+      const foo = Symbol('foo');
+      const fooCopy = Symbol('foo');
+      const bar = Symbol('bar');
 
-    t.true(deepEqual(foo, foo));
-    t.false(deepEqual(foo, fooCopy));
-    t.false(deepEqual(foo, bar));
-  });
-
-  test('it compares maps', (t) => {
-    const map = new Map([
-      ['key', 'value'],
-      ['foo', 'bar'],
-    ]);
-    const mapCopy = new Map([
-      ['key', 'value'],
-      ['foo', 'bar'],
-    ]);
-    const mapFlipped = new Map([
-      ['foo', 'bar'],
-      ['key', 'value'],
-    ]);
-    const mapDiff = new Map([
-      ['foo', 'baz'],
-      ['key', 'value'],
-    ]);
-
-    t.true(deepEqual(map, map));
-    t.true(deepEqual(map, mapCopy));
-    t.true(deepEqual(map, mapFlipped));
-
-    t.false(deepEqual(map, mapDiff));
-    t.false(deepEqual(map, new Map()));
-  });
-
-  test('it compares empty maps', (t) => {
-    t.true(deepEqual(new Map(), new Map()));
-  });
-
-  test('it compares different length maps', (t) => {
-    t.false(deepEqual(new Map(), new Map([['key', 'value']])));
-    t.false(deepEqual(new Map([['key', 'value']]), new Map()));
-    t.false(
-      deepEqual(
-        new Map([['key', 'value']]),
-        new Map([
-          ['key', 'value'],
-          ['foo', 'bar'],
-        ])
-      )
-    );
-    t.false(
-      deepEqual(
-        new Map([
-          ['key', 'value'],
-          ['foo', 'bar'],
-        ]),
-        new Map([['key', 'value']])
-      )
-    );
-  });
-
-  test('it compares sets', (t) => {
-    const set = new Set([1, 2, 3, 4]);
-    const setCopy = new Set([4, 3, 2, 1]);
-    const setDiff = new Set([1, 2, 5, 3]);
-
-    t.true(deepEqual(set, set));
-    t.true(deepEqual(set, setCopy));
-
-    t.false(deepEqual(set, new Map()));
-    t.false(deepEqual(set, setDiff));
-  });
-
-  test('it compares empty sets', (t) => {
-    t.true(deepEqual(new Set(), new Set()));
-  });
-
-  test('it compares different length sets', (t) => {
-    t.false(deepEqual(new Set(), new Set([1])));
-    t.false(deepEqual(new Set([1]), new Set()));
-    t.false(deepEqual(new Set([1]), new Set([1, 2])));
-    t.false(deepEqual(new Set([1, 2]), new Set([1])));
-  });
-
-  test('compares array buffers', (t) => {
-    const arrayBufferViews = [
-      Int8Array,
-      Uint8Array,
-      Uint8ClampedArray,
-      Int16Array,
-      Uint16Array,
-      Int32Array,
-      Uint32Array,
-      Float32Array,
-      Float64Array,
-    ];
-
-    arrayBufferViews.forEach((ArrayBufferView) => {
-      const arr = new ArrayBufferView([21, 31]);
-      const arrCopy = new ArrayBufferView([21, 31]);
-      const arrDiff = new ArrayBufferView([31, 21]);
-
-      t.true(deepEqual(arr, arr));
-      t.true(deepEqual(arr, arrCopy));
-
-      t.false(deepEqual(arr, new ArrayBufferView(0)));
-      t.false(deepEqual(arr, arrDiff));
+      t.true(deepEqual(foo, foo));
+      t.false(deepEqual(foo, fooCopy));
+      t.false(deepEqual(foo, bar));
     });
-  });
+  }
 
-  test('compares empty array buffers', (t) => {
-    t.true(deepEqual(new Int8Array(), new Int8Array()));
-    t.true(deepEqual(new Uint8Array(), new Uint8Array()));
-    t.true(deepEqual(new Uint8ClampedArray(), new Uint8ClampedArray()));
-    t.true(deepEqual(new Int16Array(), new Int16Array()));
-    t.true(deepEqual(new Uint16Array(), new Uint16Array()));
-    t.true(deepEqual(new Int32Array(), new Int32Array()));
-    t.true(deepEqual(new Uint32Array(), new Uint32Array()));
-    t.true(deepEqual(new Float32Array(), new Float32Array()));
-    t.true(deepEqual(new Float64Array(), new Float64Array()));
-  });
+  if (hasMap) {
+    test('it compares maps', (t) => {
+      const map = new Map([
+        ['key', 'value'],
+        ['foo', 'bar'],
+      ]);
+      const mapCopy = new Map([
+        ['key', 'value'],
+        ['foo', 'bar'],
+      ]);
+      const mapFlipped = new Map([
+        ['foo', 'bar'],
+        ['key', 'value'],
+      ]);
+      const mapDiff = new Map([
+        ['foo', 'baz'],
+        ['key', 'value'],
+      ]);
+
+      t.true(deepEqual(map, map));
+      t.true(deepEqual(map, mapCopy));
+      t.true(deepEqual(map, mapFlipped));
+
+      t.false(deepEqual(map, mapDiff));
+      t.false(deepEqual(map, new Map()));
+    });
+
+    test('it compares empty maps', (t) => {
+      t.true(deepEqual(new Map(), new Map()));
+    });
+
+    test('it compares different length maps', (t) => {
+      t.false(deepEqual(new Map(), new Map([['key', 'value']])));
+      t.false(deepEqual(new Map([['key', 'value']]), new Map()));
+      t.false(
+        deepEqual(
+          new Map([['key', 'value']]),
+          new Map([
+            ['key', 'value'],
+            ['foo', 'bar'],
+          ])
+        )
+      );
+      t.false(
+        deepEqual(
+          new Map([
+            ['key', 'value'],
+            ['foo', 'bar'],
+          ]),
+          new Map([['key', 'value']])
+        )
+      );
+    });
+  }
+
+  if (hasSet) {
+    test('it compares sets', (t) => {
+      const set = new Set([1, 2, 3, 4]);
+      const setCopy = new Set([4, 3, 2, 1]);
+      const setDiff = new Set([1, 2, 5, 3]);
+
+      t.true(deepEqual(set, set));
+      t.true(deepEqual(set, setCopy));
+
+      t.false(deepEqual(set, new Map()));
+      t.false(deepEqual(set, setDiff));
+    });
+
+    test('it compares empty sets', (t) => {
+      t.true(deepEqual(new Set(), new Set()));
+    });
+
+    test('it compares different length sets', (t) => {
+      t.false(deepEqual(new Set(), new Set([1])));
+      t.false(deepEqual(new Set([1]), new Set()));
+      t.false(deepEqual(new Set([1]), new Set([1, 2])));
+      t.false(deepEqual(new Set([1, 2]), new Set([1])));
+    });
+  }
+
+  if (hasArrayBuffer) {
+    test('compares array buffers', (t) => {
+      const arrayBufferViews = [
+        Int8Array,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int16Array,
+        Uint16Array,
+        Int32Array,
+        Uint32Array,
+        Float32Array,
+        Float64Array,
+      ];
+
+      arrayBufferViews.forEach((ArrayBufferView) => {
+        const arr = new ArrayBufferView([21, 31]);
+        const arrCopy = new ArrayBufferView([21, 31]);
+        const arrDiff = new ArrayBufferView([31, 21]);
+
+        t.true(deepEqual(arr, arr));
+        t.true(deepEqual(arr, arrCopy));
+
+        t.false(deepEqual(arr, new ArrayBufferView(0)));
+        t.false(deepEqual(arr, arrDiff));
+      });
+    });
+
+    test('compares empty array buffers', (t) => {
+      t.true(deepEqual(new Int8Array(), new Int8Array()));
+      t.true(deepEqual(new Uint8Array(), new Uint8Array()));
+      t.true(deepEqual(new Uint8ClampedArray(), new Uint8ClampedArray()));
+      t.true(deepEqual(new Int16Array(), new Int16Array()));
+      t.true(deepEqual(new Uint16Array(), new Uint16Array()));
+      t.true(deepEqual(new Int32Array(), new Int32Array()));
+      t.true(deepEqual(new Uint32Array(), new Uint32Array()));
+      t.true(deepEqual(new Float32Array(), new Float32Array()));
+      t.true(deepEqual(new Float64Array(), new Float64Array()));
+    });
+  }
 
   test('compares error objects', (t) => {
     const err = new Error();
