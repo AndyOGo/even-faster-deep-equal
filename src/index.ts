@@ -47,14 +47,7 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
   let stackPointer = 0;
 
   stack: do {
-    let { actual, expected } = plate;
-
-    // fastest comparison - strict equal
-    if (actual === expected && stackPointer) {
-      stack[stackPointer] = null;
-      plate = stack[--stackPointer] as Plate;
-      ({ actual, expected } = plate);
-    }
+    const { actual, expected } = plate;
 
     // if last index reached, pop stack or return
     if (plate.index != null && plate.index <= 0) {
