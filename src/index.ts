@@ -15,7 +15,6 @@ export interface Plate {
   index?: number;
   iterator?: IterableIterator<[unknown, unknown]>;
   keys?: string[];
-  isObject?: boolean;
   type?: Type;
 }
 
@@ -64,16 +63,13 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
       }
     }
 
-    const isObject =
-      plate.isObject ||
-      (actual &&
-        expected &&
-        typeof actual == 'object' &&
-        typeof expected == 'object');
-    plate.isObject = isObject;
-
     // Non-primitives
-    if (isObject) {
+    if (
+      actual &&
+      expected &&
+      typeof actual == 'object' &&
+      typeof expected == 'object'
+    ) {
       // Different types
       if (
         actual.constructor !==
