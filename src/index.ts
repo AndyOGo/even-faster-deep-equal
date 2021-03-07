@@ -103,6 +103,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             (actualItem !== actualItem && expectedItem !== expectedItem)
           ) {
             continue;
+          } else if (typeof actualItem !== 'object') {
+            return false;
           }
 
           plate.index = index;
@@ -146,6 +148,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             (actualItem !== actualItem && expectedItem !== expectedItem)
           ) {
             continue;
+          } else if (typeof actualItem !== 'object') {
+            return false;
           }
 
           stack[++stackPointer] = {
@@ -210,6 +214,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             (actualItem !== actualItem && expectedItem !== expectedItem)
           ) {
             continue;
+          } else if (typeof actualItem !== 'object') {
+            return false;
           }
 
           plate.index = index;
@@ -308,6 +314,8 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
             (actualItem !== actualItem && expectedItem !== expectedItem)
           ) {
             continue;
+          } else if (typeof actualItem !== 'object') {
+            return false;
           }
 
           plate.index = index;
