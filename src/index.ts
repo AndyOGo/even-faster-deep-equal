@@ -1,13 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type Type =
-  | 'Array'
-  | 'Map'
-  | 'Set'
-  | 'ArrayBuffer'
-  | 'RegExp'
-  | 'ValueOf'
-  | 'ToString'
-  | 'Object';
 export interface Plate {
   actual: any;
   expected: any;
@@ -15,7 +6,6 @@ export interface Plate {
   index?: number;
   iterator?: IterableIterator<[unknown, unknown]>;
   keys?: string[];
-  type?: Type;
 }
 
 export type Stack = (Plate | null)[];
@@ -78,26 +68,6 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
         return false;
       }
 
-      const type =
-        plate.type || arrayIsArray(actual)
-          ? 'Array'
-          : hasMap && actual instanceof Map && expected instanceof Map
-          ? 'Map'
-          : hasSet && actual instanceof Set && expected instanceof Set
-          ? 'Set'
-          : hasArrayBuffer &&
-            (<ArrayBufferConstructor['isView']>arrayBufferIsView)(actual) &&
-            (<ArrayBufferConstructor['isView']>arrayBufferIsView)(expected)
-          ? 'ArrayBuffer'
-          : actual.constructor === RegExp
-          ? 'RegExp'
-          : actual.valueOf !== objectValueOf
-          ? 'ValueOf'
-          : actual.toString !== objectToString
-          ? 'ToString'
-          : 'Object';
-      plate.type = type;
-
       let length;
       let index;
       let keys;
@@ -106,253 +76,251 @@ function deepEqual<T = unknown>(actual: unknown, expected: T): actual is T {
       let actualItem;
       let expectedItem;
 
-      switch (type) {
-        // Array
-        case 'Array':
-          length = actual.length;
+      // Array
+      if (arrayIsArray(actual)) {
+        length = actual.length;
 
-          if (length !== (<[]>(<unknown>expected)).length) {
-            return false;
-          }
+        if (length !== (<[]>(<unknown>expected)).length) {
+          return false;
+        }
 
-          index = plate.index || length;
+        index = plate.index || length;
 
-          plate.length = length;
+        plate.length = length;
 
-          if (length === 0) {
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
-          }
+        if (length === 0) {
+          stack[stackPointer] = null;
+          stackPointer--;
+          continue stack;
+        }
 
-          for (; index-- !== 0; ) {
-            actualItem = actual[index];
-            expectedItem = (<[]>(<unknown>expected))[index];
-
-            if (
-              actualItem === expectedItem ||
-              (actualItem !== actualItem && expectedItem !== expectedItem)
-            ) {
-              continue;
-            }
-
-            plate.index = index;
-
-            stack[++stackPointer] = {
-              actual: actualItem,
-              expected: expectedItem,
-            };
-
-            continue stack;
-          }
-
-          break;
-
-        // Map
-        case 'Map':
-          if (!plate.iterator) {
-            if (actual.size !== expected.size) {
-              return false;
-            }
-
-            if (actual.size === 0) {
-              stack[stackPointer] = null;
-              stackPointer--;
-              continue stack;
-            }
-          }
-
-          iterator = plate.iterator || actual.entries();
-          plate.iterator = iterator;
-
-          while (!(item = iterator.next()).done) {
-            if (!expected.has(item.value[0])) {
-              return false;
-            }
-
-            actualItem = item.value[1];
-            expectedItem = expected.get(item.value[0]);
-
-            if (
-              actualItem === expectedItem ||
-              (actualItem !== actualItem && expectedItem !== expectedItem)
-            ) {
-              continue;
-            }
-
-            stack[++stackPointer] = {
-              actual: actualItem,
-              expected: expectedItem,
-            };
-
-            continue stack;
-          }
-
-          break;
-
-        // Set
-        case 'Set':
-          if (!plate.iterator) {
-            if (actual.size !== expected.size) {
-              return false;
-            }
-
-            if (actual.size === 0) {
-              stack[stackPointer] = null;
-              stackPointer--;
-              continue stack;
-            }
-          }
-
-          iterator = actual.entries();
-          item;
-
-          while (!(item = iterator.next()).done) {
-            if (!expected.has(item.value[0])) {
-              return false;
-            }
-          }
-
-          break;
-
-        // ArrayBuffer
-        case 'ArrayBuffer':
-          length = (<ArrayBufferViewWithLength>actual).length;
-          if (length != (<ArrayBufferViewWithLength>expected).length) {
-            return false;
-          }
-
-          if (length === 0) {
-            stack[stackPointer] = null;
-            stackPointer--;
-            continue stack;
-          }
-
-          plate.length = length;
-          index = plate.index || length;
-
-          for (; index-- !== 0; ) {
-            actualItem = (<[]>(<unknown>actual))[index];
-            expectedItem = (<[]>(<unknown>expected))[index];
-
-            if (
-              actualItem === expectedItem ||
-              (actualItem !== actualItem && expectedItem !== expectedItem)
-            ) {
-              continue;
-            }
-
-            plate.index = index;
-
-            stack[++stackPointer] = {
-              actual: actualItem,
-              expected: expectedItem,
-            };
-
-            continue stack;
-          }
-
-          break;
-
-        // Regular Expression
-        case 'RegExp':
-          if (
-            (<RegExp>(<unknown>actual)).source !==
-              (<RegExp>(<unknown>expected)).source ||
-            (<RegExp>(<unknown>actual)).flags !==
-              (<RegExp>(<unknown>expected)).flags
-          ) {
-            return false;
-          }
-          break;
-
-        // Primitive value of custom objects like Date, String, Number, Symbol, Boolean, etc.
-        case 'ValueOf':
-          if (actual.valueOf() !== expected.valueOf()) {
-            return false;
-          }
-          break;
-
-        // String representation of custom objects like Error, etc.
-        case 'ToString':
-          if (actual.toString() !== expected.toString()) {
-            return false;
-          }
-          break;
-
-        // Object
-        default:
-          keys = plate.keys || objectKeys(actual);
-          length = keys.length;
+        for (; index-- !== 0; ) {
+          actualItem = actual[index];
+          expectedItem = (<[]>(<unknown>expected))[index];
 
           if (
-            !plate.keys &&
-            !actual.$$typeof &&
-            !expected.$$typeof &&
-            length !== objectKeys(expected).length
+            actualItem === expectedItem ||
+            (actualItem !== actualItem && expectedItem !== expectedItem)
           ) {
+            continue;
+          }
+
+          plate.index = index;
+
+          stack[++stackPointer] = {
+            actual: actualItem,
+            expected: expectedItem,
+          };
+
+          continue stack;
+        }
+      }
+
+      // Map
+      else if (hasMap && actual instanceof Map && expected instanceof Map) {
+        if (!plate.iterator) {
+          if (actual.size !== expected.size) {
             return false;
           }
 
-          if (length === 0) {
+          if (actual.size === 0) {
             stack[stackPointer] = null;
             stackPointer--;
             continue stack;
           }
+        }
 
-          index = plate.index || length;
-          plate.keys = keys;
-          plate.length = length;
+        iterator = plate.iterator || actual.entries();
+        plate.iterator = iterator;
 
-          // custom handling for DOM elements
-          if (hasElementType && actual instanceof Element) {
+        while (!(item = iterator.next()).done) {
+          if (!expected.has(item.value[0])) {
             return false;
           }
 
-          for (; index-- !== 0; ) {
-            const key = keys[index];
+          actualItem = item.value[1];
+          expectedItem = expected.get(item.value[0]);
 
-            if (
-              (key === '_owner' || key === '__v' || key === '__o') &&
-              actual.$$typeof
-            ) {
-              // React-specific: avoid traversing React elements' _owner
-              // Preact-specific: avoid traversing Preact elements' __v and __o
-              //    __v = $_original / $_vnode
-              //    __o = $_owner
-              // These properties contain circular references and are not needed when
-              // comparing the actual elements (and not their owners)
-              // .$$typeof and ._store on just reasonable markers of elements
-
-              continue;
-            }
-
-            if (!objectHasOwnProperty.call(expected, key)) {
-              return false;
-            }
-
-            actualItem = (<Record<string, unknown>>(<unknown>actual))[key];
-            expectedItem = (<Record<string, unknown>>(<unknown>expected))[key];
-
-            if (
-              actualItem === expectedItem ||
-              (actualItem !== actualItem && expectedItem !== expectedItem)
-            ) {
-              continue;
-            }
-
-            plate.index = index;
-
-            stack[++stackPointer] = {
-              actual: actualItem,
-              expected: expectedItem,
-            };
-
-            continue stack;
+          if (
+            actualItem === expectedItem ||
+            (actualItem !== actualItem && expectedItem !== expectedItem)
+          ) {
+            continue;
           }
 
-          plate.length = 0;
-          break;
+          stack[++stackPointer] = {
+            actual: actualItem,
+            expected: expectedItem,
+          };
+
+          continue stack;
+        }
+      }
+
+      // Set
+      else if (hasSet && actual instanceof Set && expected instanceof Set) {
+        if (!plate.iterator) {
+          if (actual.size !== expected.size) {
+            return false;
+          }
+
+          if (actual.size === 0) {
+            stack[stackPointer] = null;
+            stackPointer--;
+            continue stack;
+          }
+        }
+
+        iterator = actual.entries();
+        item;
+
+        while (!(item = iterator.next()).done) {
+          if (!expected.has(item.value[0])) {
+            return false;
+          }
+        }
+      }
+
+      // ArrayBuffer
+      else if (
+        hasArrayBuffer &&
+        (<ArrayBufferConstructor['isView']>arrayBufferIsView)(actual) &&
+        (<ArrayBufferConstructor['isView']>arrayBufferIsView)(expected)
+      ) {
+        length = (<ArrayBufferViewWithLength>actual).length;
+        if (length != (<ArrayBufferViewWithLength>expected).length) {
+          return false;
+        }
+
+        if (length === 0) {
+          stack[stackPointer] = null;
+          stackPointer--;
+          continue stack;
+        }
+
+        plate.length = length;
+        index = plate.index || length;
+
+        for (; index-- !== 0; ) {
+          actualItem = (<[]>(<unknown>actual))[index];
+          expectedItem = (<[]>(<unknown>expected))[index];
+
+          if (
+            actualItem === expectedItem ||
+            (actualItem !== actualItem && expectedItem !== expectedItem)
+          ) {
+            continue;
+          }
+
+          plate.index = index;
+
+          stack[++stackPointer] = {
+            actual: actualItem,
+            expected: expectedItem,
+          };
+
+          continue stack;
+        }
+      }
+
+      // Regular Expression
+      else if (actual.constructor === RegExp) {
+        if (
+          (<RegExp>(<unknown>actual)).source !==
+            (<RegExp>(<unknown>expected)).source ||
+          (<RegExp>(<unknown>actual)).flags !==
+            (<RegExp>(<unknown>expected)).flags
+        ) {
+          return false;
+        }
+      }
+
+      // Primitive value of custom objects like Date, String, Number, Symbol, Boolean, etc.
+      else if (actual.valueOf !== objectValueOf) {
+        if (actual.valueOf() !== expected.valueOf()) {
+          return false;
+        }
+      }
+
+      // String representation of custom objects like Error, etc.
+      else if (actual.toString !== objectToString) {
+        if (actual.toString() !== expected.toString()) {
+          return false;
+        }
+      }
+
+      // Object
+      else {
+        keys = plate.keys || objectKeys(actual);
+        length = keys.length;
+
+        if (
+          !plate.keys &&
+          !actual.$$typeof &&
+          !expected.$$typeof &&
+          length !== objectKeys(expected).length
+        ) {
+          return false;
+        }
+
+        if (length === 0) {
+          stack[stackPointer] = null;
+          stackPointer--;
+          continue stack;
+        }
+
+        index = plate.index || length;
+        plate.keys = keys;
+        plate.length = length;
+
+        // custom handling for DOM elements
+        if (hasElementType && actual instanceof Element) {
+          return false;
+        }
+
+        for (; index-- !== 0; ) {
+          const key = keys[index];
+
+          if (
+            (key === '_owner' || key === '__v' || key === '__o') &&
+            actual.$$typeof
+          ) {
+            // React-specific: avoid traversing React elements' _owner
+            // Preact-specific: avoid traversing Preact elements' __v and __o
+            //    __v = $_original / $_vnode
+            //    __o = $_owner
+            // These properties contain circular references and are not needed when
+            // comparing the actual elements (and not their owners)
+            // .$$typeof and ._store on just reasonable markers of elements
+
+            continue;
+          }
+
+          if (!objectHasOwnProperty.call(expected, key)) {
+            return false;
+          }
+
+          actualItem = (<Record<string, unknown>>(<unknown>actual))[key];
+          expectedItem = (<Record<string, unknown>>(<unknown>expected))[key];
+
+          if (
+            actualItem === expectedItem ||
+            (actualItem !== actualItem && expectedItem !== expectedItem)
+          ) {
+            continue;
+          }
+
+          plate.index = index;
+
+          stack[++stackPointer] = {
+            actual: actualItem,
+            expected: expectedItem,
+          };
+
+          continue stack;
+        }
+
+        plate.length = 0;
       }
 
       stack[stackPointer] = null;
